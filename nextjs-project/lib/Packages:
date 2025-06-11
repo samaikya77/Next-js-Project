@@ -1,0 +1,9 @@
+Packages:
+
+Bootstrap
+To display meassages - react hot toast
+To display alert meassages - sweetalert2
+form validation - yup
+react-hook-form
+@reactform/resolvers
+@supabase/supabase-js 
