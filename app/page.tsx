@@ -37,7 +37,7 @@ export default function Home() {
           <div className="card shadow-sm">
             <div className="card-body">
               <h5 className="card-title">Data & Storage</h5>
-              <p className="card-text">Manage your data and files effortlessley with supabase's powerful  database and storage solutions.</p>
+              <p className="card-text">Manage your data and files effortlessley with supabase powerful  database and storage solutions.</p>
             </div>
 
           </div>
