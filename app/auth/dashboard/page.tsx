@@ -20,6 +20,7 @@ interface ProductType {
   cost?: string;
   banner_image?: string | File | null;
 }
+ 
 
 const formSchema = yup.object().shape({
   title: yup.string().required("Product is required"),
@@ -28,10 +29,10 @@ const formSchema = yup.object().shape({
 });
 
 export default function DashboardPage() {
-  const [previewImage, setPreviewImage] = useState<null>(null);
-  const [products, setProducts] = useState<ProductType | null>(null);
-  const [userId, setUserId] = useState<null>(null);
-  const [editId, setEditId]=useState(null); // for edit product
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [editId, setEditId]=useState<null | number>(null); // for edit product
   
   
  
@@ -50,6 +51,20 @@ export default function DashboardPage() {
   } = useForm({
     resolver: yupResolver(formSchema),
   });
+
+  //fetch products
+    //user is logged in , after login we will fetch the userid , pass the userid to function that function will fetch the produts from table
+    const fetchProductFromTable=async (userId: string) =>{
+    setIsLoading(true);
+      const {data}=await supabase.from("Products").select("*").eq("user_id", userId)
+      if(data){
+        setProducts(data as ProductType[]);
+      }else{
+        setProducts([])
+
+      }
+      setIsLoading(false);
+    }; 
 
   useEffect(() => {
     const handleLoginSession = async () => {
@@ -93,13 +108,13 @@ export default function DashboardPage() {
       router.push("/auth/login");
       return;
     }
-  }, []);
+  },[]);
   //function to upload image file to supabase storage
   const uploadImageFile= async (file:File)=>{
     
     const fileExtension=file.name.split(".").pop()
     const fileName=`${Date.now()}.${fileExtension}`; //banner.jpg =>jpg
-    const {data,error}= await supabase.storage
+    const {error}= await supabase.storage
     .from("product-image")
     .upload (fileName, file);
     if(error){
@@ -112,7 +127,7 @@ export default function DashboardPage() {
    }
 
  // form submission handler
-  const onFormSubmit = async (formData: any) => {
+  const onFormSubmit = async (formData: ProductType) => {
     setIsLoading(true);
      let imagePath=formData.banner_image;
      // console.log("Form Data:", formData);
@@ -124,7 +139,7 @@ export default function DashboardPage() {
       }
       if(editId){
         //edit operation
-        const {data,error}= await supabase.from("Products").update({
+        const {error}= await supabase.from("Products").update({
           ...formData,
           banner_image:imagePath,       
         }).match ({id:editId, user_id:userId});
@@ -135,7 +150,7 @@ export default function DashboardPage() {
         }
       } else {
         //add opeartion
-        const {data,error} = await supabase
+        const {error} = await supabase
           .from("Products")
           .insert({...formData, user_id:userId, banner_image:imagePath, });
    
@@ -154,24 +169,14 @@ export default function DashboardPage() {
       fetchProductFromTable(userId!);
       setIsLoading(false);
     };
-    //fetch products
-    //user is logged in , after login we will fetch the userid , pass the userid to function that function will fetch the produts from table
-    const fetchProductFromTable=async (userId: string) =>{
-    setIsLoading(true);
-      const {data,error}=await supabase.from("Products").select("*").eq("user_id", userId)
-      if(data){
-        setProducts(data);
-      }
-      setIsLoading(false);
-    }; 
+    
     //handle edit data
     const handleEditData= async (product:ProductType)=>{
       setValue("title", product.title);
-      setValue("content", product.content);
-      setValue("cost", product.cost);
-      setValue("banner_image", product.banner_image);
-      setPreviewImage(product.banner_image || null);
-      setEditId(product.id);
+      setValue("content", product.content ?? "");
+      setValue("cost", product.cost ?? "");
+      setPreviewImage(typeof product.banner_image === "string" ? product.banner_image:null)
+      setEditId(product.id!);
 
 
     } 
@@ -187,7 +192,7 @@ export default function DashboardPage() {
       confirmButtonText: "Yes, delete it!",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const { data, error } = await supabase.from("Products").delete().match({
+        const {error } = await supabase.from("Products").delete().match({
           id: id,
           user_id: userId,
         });
@@ -261,8 +266,9 @@ export default function DashboardPage() {
                   type="file"
                   className="form-control"
                   onChange={(event) => {
-                    setValue("banner_image", event.target.files[0]); // Set the file in the form state
-                    setPreviewImage(URL.createObjectURL(event.target.files[0])); // Set the preview image
+                    if(event.target.files && event.target.files.length>0){// Set the file in the form state
+                    setPreviewImage(URL.createObjectURL(event.target.files[0]));
+                    } // Set the preview image
                   }}
                 />
                 <small className="text-danger"></small>
@@ -293,17 +299,25 @@ export default function DashboardPage() {
                     <td>{singleProduct.content}</td>
                     <td>${singleProduct.cost}</td>
                     <td>
-		    {singleProduct.banner_image ?(
-		       <Image
-                            src={singleProduct.banner_image}
+                        {singleProduct.banner_image ? (
+                          <Image
+                          src={
+                            typeof singleProduct.banner_image === "string"
+                              ? singleProduct.banner_image
+                              : singleProduct.banner_image instanceof File
+                              ? URL.createObjectURL(
+                                  singleProduct.banner_image
+                                )
+                              : ""
+                          }
                             alt="Sample Product"
                             width="50"
                             height={50}
                           />
-                          ):(
-                            "--"
-                          )}
-                    </td>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
                     <td>
                       <button className="btn btn-primary btn-sm" onClick={()=>handleEditData(singleProduct)}>Edit</button>
                       <button

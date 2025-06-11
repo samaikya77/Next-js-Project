@@ -8,6 +8,20 @@ import { supabase } from "@/lib/SupabaseClient";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
+
+interface RegisterType {
+    displayName?:string;
+    email:string;
+    phone?:string;
+    gender?:string;
+    password:string;
+    confirmPassword?:string;
+}
+    
+    
+
+
+
     const schema=yup.object().shape({
         displayName: yup.string().required("Display Name is required"),
         email: yup.string().email("Invalid email").required("Email is required"),
@@ -20,13 +34,13 @@ import { useRouter } from "next/navigation";
 
 export default function Registerpage(){
     const router=useRouter()
-    const {register, handleSubmit,formState:{errors,isSubmitting},}= useForm({
+    const {register, handleSubmit,formState:{errors},}= useForm({
         resolver:yupResolver(schema),
     });
-    const onsubmit= async (formdata:any)=>{
+    const onsubmit= async (formdata:RegisterType)=>{
        // console.log("Form submitted:", formdata)
        const {displayName, email, password,phone,gender}  = formdata;     
-       const {data,error}= await supabase.auth.signUp({
+       const {error}= await supabase.auth.signUp({
          email,
          password,
          options:{

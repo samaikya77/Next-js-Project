@@ -3,16 +3,22 @@ import Loader from "@/components/loader";
 import { Children, createContext, useContext, useEffect } from "react";
 import { useState  } from "react";
 
-
+interface UserProfile {
+  name?:string;
+  email?:string;
+  phone?:string;
+  gender?:string;
+ }
 interface AppUtilsType {
   isLoggedIn: boolean;
   setIsLoggedIn:(state:boolean)=>void;
-  setAuthToken: (state:null)=>void;
-  userProfile:null;
-  setUserProfile:(state:null)=>void;
+  setAuthToken: (state:string | null)=>void;
+  userProfile:  UserProfile | null;
+  setUserProfile:(state:UserProfile | null)=>void;
   setIsLoading:(state:boolean)=>void
   
 }
+
 const AppUtilsContext = createContext<AppUtilsType | undefined>(undefined);
 export const AppUtilsProvider = ({
   Children,
@@ -21,7 +27,7 @@ export const AppUtilsProvider = ({
 }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [authToken, setAuthToken]=useState<null | string>(null);
-  const [userProfile, setUserProfile]= useState<null>(null);
+  const [userProfile, setUserProfile]= useState<UserProfile |null>(null);
   const [isLoading, setIsLoading]= useState(false);
  
   useEffect(()=>{
@@ -30,7 +36,7 @@ export const AppUtilsProvider = ({
     if(token){
       setAuthToken(token);
       setIsLoggedIn(true);
-      setUserProfile( JSON.parse(userProfile));
+      setUserProfile( userProfile ? JSON.parse(userProfile) : null);
     }
     
   },[]);
@@ -43,7 +49,7 @@ export const AppUtilsProvider = ({
 export const myAppHook = () => {
   const context = useContext(AppUtilsContext);
   if (!context) {
-    throw new Error("App Utils functions must be wrapped in AppUtilsProvider");
+    throw new Error("AppUtils functions must be wrapped in AppUtilsProvider");
   }
   return context;
 };

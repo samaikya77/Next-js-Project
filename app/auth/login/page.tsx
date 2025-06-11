@@ -9,7 +9,12 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import {error} from "console";
+
+interface UserType {
+    email:string;
+    password:string;
+}
+
 
 const formSchema= yup.object().shape({
     email:yup.string().email("Invalid email").required("Email is required"),
@@ -20,7 +25,7 @@ const formSchema= yup.object().shape({
 export default function LoginPage(){
     const router=useRouter();
     const {isLoggedIn, setIsLoggedIn, setAuthToken}=myAppHook();
-    const {register,handleSubmit, formState: {isSubmitting,errors}}=useForm({
+    const {register,handleSubmit, formState: {errors}}=useForm({
         resolver:yupResolver(formSchema),
     })
     useEffect(()=>{
@@ -30,7 +35,7 @@ export default function LoginPage(){
     }
     },[isLoggedIn]);
     const handleSocialOauth= async(provider:"google" | "github") =>{
-        const {data, error}= await supabase.auth.signInWithOAuth({
+        const {error}= await supabase.auth.signInWithOAuth({
             provider,
             options:{
                 redirectTo: `${window.location.origin}/auth/dashboard`
@@ -42,26 +47,26 @@ export default function LoginPage(){
         }
 
     }
-    const onSubmit= async (formdata:any)=>{
-        const {email, password}=formdata;
-        const {data,error}= await supabase.auth.signInWithPassword({
+    async function onSubmit(formdata: UserType) {
+        const { email, password } = formdata;
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
-    
-        if(error){
-            toast.error("Failed to login")
+
+        if (error) {
+            toast.error("Failed to login");
             return;
-        }else{
-            
-         if(data.session?.access_token){
-        setAuthToken(data.session?.access_token);
-        localStorage.setItem("authToken", data.session?.access_token);
-        setIsLoggedIn(true);
-        toast.success("Logged in successfully") 
-        }
-    };
-}
+        } else {
+
+            if (data.session?.access_token) {
+                setAuthToken(data.session?.access_token);
+                localStorage.setItem("authToken", data.session?.access_token);
+                setIsLoggedIn(true);
+                toast.success("Logged in successfully");
+            }
+        };
+    }
 
     return (
     <>
@@ -88,7 +93,7 @@ export default function LoginPage(){
 
         </div>
         <p className="text-center mt-3">
-            Don't have an account? <a href="/auth/register">Register</a>
+            Dont have an account? <a href="/auth/register">Register</a>
         </p>
     </div>
     <Footer />
