@@ -16,8 +16,8 @@ import Swal from "sweetalert2";
 interface ProductType {
   id?: number;
   title: string;
-  content?: string;
-  cost?: string;
+  content: string;
+  cost: string;
   banner_image?: string | File | null;
 }
  
@@ -48,7 +48,7 @@ export default function DashboardPage() {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<ProductType>({
     resolver: yupResolver(formSchema),
   });
 
@@ -266,8 +266,9 @@ export default function DashboardPage() {
                   type="file"
                   className="form-control"
                   onChange={(event) => {
-                    if(event.target.files && event.target.files.length>0){// Set the file in the form state
+                    if(event.target.files && event.target.files.length>0){
                     setPreviewImage(URL.createObjectURL(event.target.files[0]));
+                    setValue("banner_image",event.target.files[0]) // Set the file in the form state
                     } // Set the preview image
                   }}
                 />
@@ -302,14 +303,9 @@ export default function DashboardPage() {
                         {singleProduct.banner_image ? (
                           <Image
                           src={
-                            typeof singleProduct.banner_image === "string"
-                              ? singleProduct.banner_image
-                              : singleProduct.banner_image instanceof File
-                              ? URL.createObjectURL(
-                                  singleProduct.banner_image
-                                )
-                              : ""
-                          }
+                            singleProduct.banner_image as string}
+                              
+                          
                             alt="Sample Product"
                             width="50"
                             height={50}
